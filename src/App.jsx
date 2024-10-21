@@ -8,10 +8,11 @@ import SpotifyWebApi from 'spotify-web-api-js';
 const spotifyApi = new SpotifyWebApi();
 
 const colors = {
-  primaryColor: '#1f1955',  // Color principal
+  primaryColor: '#1f1955',
   secondaryColor: '#e1462d',
   accentColor: '#8e10e9',
   darkColor: '#4a0e4e',
+  newColor: '#00bc97',
   white: '#ffffff'
 };
 
@@ -27,6 +28,8 @@ function App() {
   const [showForm, setShowForm] = useState(true);
   const [isRegistered, setIsRegistered] = useState(false);
   const [showAlert, setShowAlert] = useState(false);
+  const [userProfile, setUserProfile] = useState(null);
+  const [showProfile, setShowProfile] = useState(false);
 
   useEffect(() => {
     const hash = window.location.hash;
@@ -68,23 +71,32 @@ function App() {
 
   const handleUserSubmit = (data) => {
     console.log('Datos del usuario:', data);
+    setUserProfile(data);
     setIsRegistered(true);
     setShowForm(false);
+  };
+
+  const toggleProfileView = () => {
+    if (isRegistered) {
+      setShowProfile(!showProfile);
+    } else {
+      setShowForm(!showForm);
+    }
   };
 
   return (
     <div style={{ backgroundColor: colors.primaryColor, color: colors.white, minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
       <Navbar expand="lg" style={{ backgroundColor: colors.secondaryColor }}>
         <Container>
-          <Navbar.Brand href="#home" style={{ color: colors.white, display: 'flex', alignItems: 'center' }}>
+          <Navbar.Brand href="#home" style={{ color: colors.white }}>
             <Music size={24} style={{ marginRight: '0.5rem' }} />
             <span className="h4 mb-0">Kodigo Music</span>
           </Navbar.Brand>
           <Navbar.Toggle aria-controls="basic-navbar-nav" />
           <Navbar.Collapse id="basic-navbar-nav">
             <Nav className="ms-auto">
-              <Nav.Link onClick={() => setShowForm(!showForm)} style={{ color: colors.accentColor }}>
-                {showForm ? 'Cerrar' : 'Perfil'}
+              <Nav.Link onClick={toggleProfileView} style={{ color: colors.white }}>
+                {isRegistered ? 'Ver Perfil' : 'Crear Perfil'}
               </Nav.Link>
             </Nav>
           </Navbar.Collapse>
@@ -92,10 +104,21 @@ function App() {
       </Navbar>
 
       <Container className="flex-grow-1 py-4">
-        {showForm && (
+        {showForm && !isRegistered && (
           <Card style={{ backgroundColor: colors.darkColor, color: colors.white, marginBottom: '1rem' }}>
             <Card.Body>
               <UserForm onSubmit={handleUserSubmit} />
+            </Card.Body>
+          </Card>
+        )}
+
+        {showProfile && isRegistered && (
+          <Card style={{ backgroundColor: colors.newColor, color: colors.white, marginBottom: '1rem' }}>
+            <Card.Body>
+              <h3>Perfil de Usuario</h3>
+              <p><strong>Nombre:</strong> {userProfile.name}</p>
+              <p><strong>Email:</strong> {userProfile.email}</p>
+              <p><strong>Género musical favorito:</strong> {userProfile.favoriteGenre}</p>
             </Card.Body>
           </Card>
         )}
@@ -118,7 +141,7 @@ function App() {
               />
             </Col>
             <Col xs={12} md={4} lg={2}>
-              <Button variant="primary" type="submit" className="w-100" style={{ backgroundColor: colors.secondaryColor, borderColor: colors.secondaryColor }}>Buscar</Button>
+              <Button variant="primary" type="submit" className="w-100" style={{ backgroundColor: colors.newColor }}>Buscar</Button>
             </Col>
           </Row>
         </Form>
