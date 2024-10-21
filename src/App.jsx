@@ -1,12 +1,14 @@
 import React, { useEffect, useState } from 'react';
 import SpotifyWebApi from 'spotify-web-api-js';
 import UserForm from './components/UserForm';
-import 'bootstrap/dist/css/bootstrap.min.css'; 
+import { Container, Navbar, Nav, Form, Button, Card, Row, Col } from 'react-bootstrap';
+import 'bootstrap/dist/css/bootstrap.min.css';
+import { Music } from 'lucide-react';
 
 const spotifyApi = new SpotifyWebApi();
 
-const CLIENT_ID = '9a32c7211b134487b055c5b6c05179c3'; 
-const REDIRECT_URI = 'http://localhost:5173';
+const CLIENT_ID = '9a32c7211b134487b055c5b6c05179c3';
+const REDIRECT_URI = 'http://localhost:5174'; // Actualizado a 5174
 const AUTH_ENDPOINT = 'https://accounts.spotify.com/authorize';
 const RESPONSE_TYPE = 'token';
 
@@ -14,7 +16,7 @@ function App() {
   const [token, setToken] = useState('');
   const [query, setQuery] = useState('');
   const [results, setResults] = useState([]);
-  const [showForm, setShowForm] = useState(false); 
+  const [showForm, setShowForm] = useState(false);
 
   useEffect(() => {
     const hash = window.location.hash;
@@ -30,7 +32,8 @@ function App() {
     spotifyApi.setAccessToken(token);
   }, []);
 
-  const handleSearch = () => {
+  const handleSearch = (e) => {
+    e.preventDefault();
     if (query) {
       spotifyApi.searchTracks(query).then(response => {
         setResults(response.tracks.items);
@@ -42,75 +45,89 @@ function App() {
 
   const handleUserSubmit = (data) => {
     console.log('Datos del usuario:', data);
-    setShowForm(false); // Cierra el formulario después de enviar
+    setShowForm(false);
+  };
+
+  const login = () => {
+    window.location = `${AUTH_ENDPOINT}?client_id=${CLIENT_ID}&redirect_uri=${REDIRECT_URI}&response_type=${RESPONSE_TYPE}`;
   };
 
   return (
-    <div className="bg-purple text-white min-vh-100">
-      <header className="py-4 text-center">
-        
-        
-        {/* Menú de navegación */}
-        <nav className="navbar navbar-expand-lg navbar-light bg-light">
-          <div className="container-fluid">
-            <a className="navbar-brand" href="#"><h1>Kodigo Music</h1></a>
-            <button className="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
-              <span className="navbar-toggler-icon"></span>
-            </button>
-            <div className="collapse navbar-collapse" id="navbarNav">
-              <ul className="navbar-nav">
-                <li className="nav-item">
-                  <button 
-                    onClick={() => setShowForm(!showForm)} 
-                    className={`nav-link ${showForm ? 'active' : ''}`}
-                  >
-                    Login
-                  </button>
-                </li>
-                {/* Puedes agregar más elementos de menú aquí */}
-              </ul>
-            </div>
-          </div>
-        </nav>
+    <div className="bg-dark text-light min-vh-100 d-flex flex-column">
+      <Navbar bg="dark" variant="dark" expand="lg" className="border-bottom border-light">
+        <Container>
+          <Navbar.Brand href="#home" className="d-flex align-items-center">
+            <Music size={24} className="me-2" />
+            <span className="h4 mb-0">Kodigo Music</span>
+          </Navbar.Brand>
+          <Navbar.Toggle aria-controls="basic-navbar-nav" />
+          <Navbar.Collapse id="basic-navbar-nav">
+            <Nav className="ms-auto">
+              {!token ? (
+                <Nav.Link onClick={login}>Login</Nav.Link>
+              ) : (
+                <Nav.Link onClick={() => setShowForm(!showForm)}>
+                  {showForm ? 'Cerrar' : 'Perfil'}
+                </Nav.Link>
+              )}
+            </Nav>
+          </Navbar.Collapse>
+        </Container>
+      </Navbar>
 
-        {/* Mostrar el formulario si showForm es verdadero */}
-        {showForm && <UserForm onSubmit={handleUserSubmit} />}
-        
-        {/* Búsqueda de canciones */}
-        {!token ? null : (
-          <>
-            <div className="mt-3">
-              <input
-                type="text"
-                value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                placeholder="Buscar canciones..."
-                className="form-control"
-              />
-              <button onClick={handleSearch} className="btn btn-primary mt-2">Buscar</button>
-            </div>
-            <div className="mt-4">
-              {results.map(track => (
-                <div key={track.id} className="card bg-light text-dark mb-2">
-                  <div className="card-body">
-                    <h5 className="card-title">{track.name}</h5>
-                    <p className="card-text">{track.artists.map(artist => artist.name).join(', ')}</p>
-                    {track.preview_url && (
-                      <audio controls>
-                        <source src={track.preview_url} type="audio/mpeg" />
-                        Tu navegador no soporta el elemento de audio.
-                      </audio>
-                    )}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </>
+      <Container className="flex-grow-1 py-4">
+        {showForm && (
+          <Card className="mb-4 bg-secondary text-light">
+            <Card.Body>
+              <UserForm onSubmit={handleUserSubmit} />
+            </Card.Body>
+          </Card>
         )}
-      </header>
 
-      <footer className="text-center py-4">
-        <p>&copy; 2024 Kodigo Music. Todos los derechos reservados.</p>
+        {token && (
+          <Form onSubmit={handleSearch} className="mb-4">
+            <Row className="g-2">
+              <Col xs={12} md={8} lg={10}>
+                <Form.Control
+                  type="text"
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                  placeholder="Buscar canciones..."
+                  className="bg-dark text-light border-secondary"
+                />
+              </Col>
+              <Col xs={12} md={4} lg={2}>
+                <Button variant="primary" type="submit" className="w-100">Buscar</Button>
+              </Col>
+            </Row>
+          </Form>
+        )}
+
+        <Row xs={1} md={2} lg={3} className="g-4">
+          {results.map(track => (
+            <Col key={track.id}>
+              <Card className="h-100 bg-secondary text-light">
+                <Card.Img variant="top" src={track.album.images[0]?.url} />
+                <Card.Body>
+                  <Card.Title>{track.name}</Card.Title>
+                  <Card.Text>{track.artists.map(artist => artist.name).join(', ')}</Card.Text>
+                </Card.Body>
+                <Card.Footer className="bg-dark border-0">
+                  {track.preview_url && (
+                    <audio controls className="w-100">
+                      <source src={track.preview_url} type="audio/mpeg" />
+                      Tu navegador no soporta el elemento de audio.
+                    </audio>
+                  )}
+                </Card.Footer>
+              </Card>
+            </Col>
+          ))}
+        </Row>
+      </Container>
+
+      <footer className="bg-dark text-light text-center py-3 mt-auto border-top border-light">
+        <p className="mb-0">&copy; 2024 Kodigo Music. Todos los derechos reservados.</p>
       </footer>
     </div>
   );
