@@ -7,6 +7,7 @@ import SpotifyWebApi from 'spotify-web-api-js';
 
 const spotifyApi = new SpotifyWebApi();
 
+/* Colores pagina */
 const colors = {
   primaryColor: '#1f1955',
   secondaryColor: '#e1462d',
@@ -16,12 +17,14 @@ const colors = {
   white: '#ffffff'
 };
 
+/* Estas son las llaves para conectarnos con Spotify */
 const CLIENT_ID = '9a32c7211b134487b055c5b6c05179c3'; 
 const REDIRECT_URI = 'http://localhost:5175'; 
 const AUTH_ENDPOINT = 'https://accounts.spotify.com/authorize';
 const RESPONSE_TYPE = 'token';
 
 function App() {
+  /* Estas son las cosas que nuestra app necesita recordar */
   const [token, setToken] = useState('');
   const [query, setQuery] = useState('');
   const [results, setResults] = useState([]);
@@ -31,6 +34,7 @@ function App() {
   const [userProfile, setUserProfile] = useState(null);
   const [showProfile, setShowProfile] = useState(false);
 
+  /* Esto se hace cuando la app se abre por primera vez */
   useEffect(() => {
     const hash = window.location.hash;
     let token = window.localStorage.getItem("token");
@@ -45,10 +49,12 @@ function App() {
     spotifyApi.setAccessToken(token);
   }, []);
 
+  /* Esta función nos ayuda a entrar a Spotify */
   const login = () => {
     window.location = `${AUTH_ENDPOINT}?client_id=${CLIENT_ID}&redirect_uri=${REDIRECT_URI}&response_type=${RESPONSE_TYPE}`;
   };
 
+  /* Esta función busca canciones cuando le decimos qué queremos escuchar */
   const handleSearch = async (e) => {
     e.preventDefault();
     if (!isRegistered) {
@@ -69,6 +75,7 @@ function App() {
     }
   };
 
+  /* Esta función guarda la información del usuario cuando se registra */
   const handleUserSubmit = (data) => {
     console.log('Datos del usuario:', data);
     setUserProfile(data);
@@ -76,6 +83,7 @@ function App() {
     setShowForm(false);
   };
 
+  /* Esta función nos ayuda a ver o esconder el perfil del usuario */
   const toggleProfileView = () => {
     if (isRegistered) {
       setShowProfile(!showProfile);
@@ -84,8 +92,10 @@ function App() {
     }
   };
 
+  /* Comienzo hacer el diseño */
   return (
     <div style={{ backgroundColor: colors.primaryColor, color: colors.white, minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
+      {/* Esta es la barra de arriba de nuestra app */}
       <Navbar expand="lg" style={{ backgroundColor: colors.secondaryColor }}>
         <Container>
           <Navbar.Brand href="#home" style={{ color: colors.white }}>
@@ -103,7 +113,9 @@ function App() {
         </Container>
       </Navbar>
 
+      {/* Contenido principal de nuestra app */}
       <Container className="flex-grow-1 py-4">
+        {/* Este es el formulario para registrarse */}
         {showForm && !isRegistered && (
           <Card style={{ backgroundColor: colors.darkColor, color: colors.white, marginBottom: '1rem' }}>
             <Card.Body>
@@ -112,6 +124,7 @@ function App() {
           </Card>
         )}
 
+        {/* Esto muestra la información del perfil del usuario */}
         {showProfile && isRegistered && (
           <Card style={{ backgroundColor: colors.newColor, color: colors.white, marginBottom: '1rem' }}>
             <Card.Body>
@@ -123,12 +136,14 @@ function App() {
           </Card>
         )}
 
+        {/* Este es un mensaje que aparece si intentas buscar sin registrarte */}
         {showAlert && (
           <Alert variant="warning" onClose={() => setShowAlert(false)} dismissible>
             Por favor, regístrate antes de buscar música.
           </Alert>
         )}
 
+        {/* El buscador de canciones */}
         <Form onSubmit={handleSearch} className="mb-4">
           <Row className="g-2">
             <Col xs={12} md={8} lg={10}>
@@ -146,6 +161,7 @@ function App() {
           </Row>
         </Form>
 
+        {/* Aquí mostramos las canciones que encontramos */}
         <Row xs={1} md={2} lg={3} className="g-4">
           {results.map(track => (
             <Col key={track.id}>
