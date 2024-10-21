@@ -1,34 +1,96 @@
-import React from 'react';
-import { useForm } from 'react-hook-form';
+import React, { useState } from 'react';
+import { Form, Button, Row, Col } from 'react-bootstrap';
 
 const UserForm = ({ onSubmit }) => {
-    const { register, handleSubmit, formState: { errors } } = useForm();
+    const [formData, setFormData] = useState({
+        username: '',
+        email: '',
+        password: '',
+        favoriteGenre: ''
+    });
+
+    const handleChange = (e) => {
+        const { name, value } = e.target;
+        setFormData(prevData => ({
+            ...prevData,
+            [name]: value
+        }));
+    };
+
+    const handleSubmit = (e) => {
+        e.preventDefault();
+        onSubmit(formData);
+    };
+
+    const genres = [
+        'Pop', 'Rock', 'Hip Hop', 'R&B', 'Country', 'Electronic',
+        'Classical', 'Jazz', 'Blues', 'Reggae', 'Folk', 'Metal'
+    ];
 
     return (
-        <form onSubmit={handleSubmit(onSubmit)} className="mb-4">
-            <div className="mb-3">
-                <label htmlFor="name" className="form-label">Nombre:</label>
-                <input
-                    id="name"
-                    {...register('name', { required: true })}
-                    className="form-control"
-                />
-                {errors.name && <span className="text-danger">Este campo es obligatorio</span>}
-            </div>
+        <Form onSubmit={handleSubmit}>
+            <Row>
+                <Col md={6}>
+                    <Form.Group className="mb-3">
+                        <Form.Label>Nombre de usuario</Form.Label>
+                        <Form.Control
+                            type="text"
+                            name="username"
+                            value={formData.username}
+                            onChange={handleChange}
+                            required
+                        />
+                    </Form.Group>
+                </Col>
+                <Col md={6}>
+                    <Form.Group className="mb-3">
+                        <Form.Label>Correo electrónico</Form.Label>
+                        <Form.Control
+                            type="email"
+                            name="email"
+                            value={formData.email}
+                            onChange={handleChange}
+                            required
+                        />
+                    </Form.Group>
+                </Col>
+            </Row>
 
-            <div className="mb-3">
-                <label htmlFor="email" className="form-label">Correo Electrónico:</label>
-                <input
-                    id="email"
-                    type="email"
-                    {...register('email', { required: true })}
-                    className="form-control"
-                />
-                {errors.email && <span className="text-danger">Este campo es obligatorio</span>}
-            </div>
+            <Row>
+                <Col md={6}>
+                    <Form.Group className="mb-3">
+                        <Form.Label>Contraseña</Form.Label>
+                        <Form.Control
+                            type="password"
+                            name="password"
+                            value={formData.password}
+                            onChange={handleChange}
+                            required
+                        />
+                    </Form.Group>
+                </Col>
+                <Col md={6}>
+                    <Form.Group className="mb-3">
+                        <Form.Label>Género musical favorito</Form.Label>
+                        <Form.Select
+                            name="favoriteGenre"
+                            value={formData.favoriteGenre}
+                            onChange={handleChange}
+                            required
+                        >
+                            <option value="">Selecciona un género</option>
+                            {genres.map(genre => (
+                                <option key={genre} value={genre}>{genre}</option>
+                            ))}
+                        </Form.Select>
+                    </Form.Group>
+                </Col>
+            </Row>
 
-            <button type="submit" className="btn btn-primary">Enviar</button>
-        </form>
+            <Button variant="primary" type="submit" className="w-100">
+                Guardar perfil
+            </Button>
+        </Form>
     );
 };
 

@@ -1,14 +1,22 @@
-import React, { useEffect, useState } from 'react';
-import SpotifyWebApi from 'spotify-web-api-js';
-import UserForm from './components/UserForm';
-import { Container, Navbar, Nav, Form, Button, Card, Row, Col } from 'react-bootstrap';
+import React, { useState, useEffect } from 'react';
+import { Container, Navbar, Nav, Form, Button, Card, Row, Col, Alert } from 'react-bootstrap';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import { Music } from 'lucide-react';
+import UserForm from './components/UserForm';
+import SpotifyWebApi from 'spotify-web-api-js';
 
 const spotifyApi = new SpotifyWebApi();
 
-const CLIENT_ID = '9a32c7211b134487b055c5b6c05179c3';
-const REDIRECT_URI = 'http://localhost:5174'; // Actualizado a 5174
+const colors = {
+  primaryColor: '#1f1955',  // Color principal
+  secondaryColor: '#e1462d',
+  accentColor: '#8e10e9',
+  darkColor: '#4a0e4e',
+  white: '#ffffff'
+};
+
+const CLIENT_ID = '9a32c7211b134487b055c5b6c05179c3'; 
+const REDIRECT_URI = 'http://localhost:5175'; 
 const AUTH_ENDPOINT = 'https://accounts.spotify.com/authorize';
 const RESPONSE_TYPE = 'token';
 
@@ -16,60 +24,68 @@ function App() {
   const [token, setToken] = useState('');
   const [query, setQuery] = useState('');
   const [results, setResults] = useState([]);
-  const [showForm, setShowForm] = useState(false);
+  const [showForm, setShowForm] = useState(true);
+  const [isRegistered, setIsRegistered] = useState(false);
+  const [showAlert, setShowAlert] = useState(false);
 
   useEffect(() => {
     const hash = window.location.hash;
-    let token = window.localStorage.getItem('token');
+    let token = window.localStorage.getItem("token");
 
     if (!token && hash) {
-      token = hash.split('&')[0].split('=')[1];
-      window.location.hash = '';
-      window.localStorage.setItem('token', token);
+      token = hash.substring(1).split("&").find(elem => elem.startsWith("access_token")).split("=")[1];
+      window.location.hash = "";
+      window.localStorage.setItem("token", token);
     }
 
     setToken(token);
     spotifyApi.setAccessToken(token);
   }, []);
 
-  const handleSearch = (e) => {
+  const login = () => {
+    window.location = `${AUTH_ENDPOINT}?client_id=${CLIENT_ID}&redirect_uri=${REDIRECT_URI}&response_type=${RESPONSE_TYPE}`;
+  };
+
+  const handleSearch = async (e) => {
     e.preventDefault();
+    if (!isRegistered) {
+      setShowAlert(true);
+      return;
+    }
+    if (!token) {
+      login();
+      return;
+    }
     if (query) {
-      spotifyApi.searchTracks(query).then(response => {
-        setResults(response.tracks.items);
-      }).catch(error => {
+      try {
+        const data = await spotifyApi.searchTracks(query);
+        setResults(data.tracks.items);
+      } catch (error) {
         console.error('Error al buscar canciones:', error);
-      });
+      }
     }
   };
 
   const handleUserSubmit = (data) => {
     console.log('Datos del usuario:', data);
+    setIsRegistered(true);
     setShowForm(false);
   };
 
-  const login = () => {
-    window.location = `${AUTH_ENDPOINT}?client_id=${CLIENT_ID}&redirect_uri=${REDIRECT_URI}&response_type=${RESPONSE_TYPE}`;
-  };
-
   return (
-    <div className="bg-dark text-light min-vh-100 d-flex flex-column">
-      <Navbar bg="dark" variant="dark" expand="lg" className="border-bottom border-light">
+    <div style={{ backgroundColor: colors.primaryColor, color: colors.white, minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
+      <Navbar expand="lg" style={{ backgroundColor: colors.secondaryColor }}>
         <Container>
-          <Navbar.Brand href="#home" className="d-flex align-items-center">
-            <Music size={24} className="me-2" />
+          <Navbar.Brand href="#home" style={{ color: colors.white, display: 'flex', alignItems: 'center' }}>
+            <Music size={24} style={{ marginRight: '0.5rem' }} />
             <span className="h4 mb-0">Kodigo Music</span>
           </Navbar.Brand>
           <Navbar.Toggle aria-controls="basic-navbar-nav" />
           <Navbar.Collapse id="basic-navbar-nav">
             <Nav className="ms-auto">
-              {!token ? (
-                <Nav.Link onClick={login}>Login</Nav.Link>
-              ) : (
-                <Nav.Link onClick={() => setShowForm(!showForm)}>
-                  {showForm ? 'Cerrar' : 'Perfil'}
-                </Nav.Link>
-              )}
+              <Nav.Link onClick={() => setShowForm(!showForm)} style={{ color: colors.accentColor }}>
+                {showForm ? 'Cerrar' : 'Perfil'}
+              </Nav.Link>
             </Nav>
           </Navbar.Collapse>
         </Container>
@@ -77,56 +93,60 @@ function App() {
 
       <Container className="flex-grow-1 py-4">
         {showForm && (
-          <Card className="mb-4 bg-secondary text-light">
+          <Card style={{ backgroundColor: colors.darkColor, color: colors.white, marginBottom: '1rem' }}>
             <Card.Body>
               <UserForm onSubmit={handleUserSubmit} />
             </Card.Body>
           </Card>
         )}
 
-        {token && (
-          <Form onSubmit={handleSearch} className="mb-4">
-            <Row className="g-2">
-              <Col xs={12} md={8} lg={10}>
-                <Form.Control
-                  type="text"
-                  value={query}
-                  onChange={(e) => setQuery(e.target.value)}
-                  placeholder="Buscar canciones..."
-                  className="bg-dark text-light border-secondary"
-                />
-              </Col>
-              <Col xs={12} md={4} lg={2}>
-                <Button variant="primary" type="submit" className="w-100">Buscar</Button>
-              </Col>
-            </Row>
-          </Form>
+        {showAlert && (
+          <Alert variant="warning" onClose={() => setShowAlert(false)} dismissible>
+            Por favor, regístrate antes de buscar música.
+          </Alert>
         )}
+
+        <Form onSubmit={handleSearch} className="mb-4">
+          <Row className="g-2">
+            <Col xs={12} md={8} lg={10}>
+              <Form.Control
+                type="text"
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                placeholder="Buscar canciones..."
+                style={{ backgroundColor: colors.accentColor, color: colors.white }}
+              />
+            </Col>
+            <Col xs={12} md={4} lg={2}>
+              <Button variant="primary" type="submit" className="w-100" style={{ backgroundColor: colors.secondaryColor, borderColor: colors.secondaryColor }}>Buscar</Button>
+            </Col>
+          </Row>
+        </Form>
 
         <Row xs={1} md={2} lg={3} className="g-4">
           {results.map(track => (
             <Col key={track.id}>
-              <Card className="h-100 bg-secondary text-light">
+              <Card style={{ backgroundColor: colors.darkColor, color: colors.white }}>
                 <Card.Img variant="top" src={track.album.images[0]?.url} />
                 <Card.Body>
                   <Card.Title>{track.name}</Card.Title>
                   <Card.Text>{track.artists.map(artist => artist.name).join(', ')}</Card.Text>
                 </Card.Body>
-                <Card.Footer className="bg-dark border-0">
-                  {track.preview_url && (
+                {track.preview_url && (
+                  <Card.Footer>
                     <audio controls className="w-100">
                       <source src={track.preview_url} type="audio/mpeg" />
                       Tu navegador no soporta el elemento de audio.
                     </audio>
-                  )}
-                </Card.Footer>
+                  </Card.Footer>
+                )}
               </Card>
             </Col>
           ))}
         </Row>
       </Container>
 
-      <footer className="bg-dark text-light text-center py-3 mt-auto border-top border-light">
+      <footer style={{ backgroundColor: colors.secondaryColor, color: colors.white, textAlign: 'center', padding: '1rem 0', marginTop: 'auto' }}>
         <p className="mb-0">&copy; 2024 Kodigo Music. Todos los derechos reservados.</p>
       </footer>
     </div>
